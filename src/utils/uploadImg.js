@@ -2,8 +2,8 @@ import Cos from "cos-js-sdk-v5";
 
 var uploadImg = async function(file, type, callback) {
     const cos = new Cos({
-        SecretId: "AKID2yVkjaEMJ0b25XqZ3HlynLbbOuhEcyrT",
-        SecretKey: "1mHVUCLMzNUKl2SbLpBk3wZpojES9Zrj"
+        SecretId: "******************",
+        SecretKey: "*******************"
     });
     let filename = Date.now() + ".jpg";
     cos.putObject(
