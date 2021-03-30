@@ -8,8 +8,9 @@
       <label>曲譜名，如 彩虹</label>
       <md-input v-model="title"></md-input>
       <div class="flex-column type-radio">
-        <md-radio v-model="typeRadio" :value="true">弹唱</md-radio>
-        <md-radio v-model="typeRadio" :value="false">指弹</md-radio>
+        <md-radio v-model="type" value="piano">钢琴</md-radio>
+        <md-radio v-model="type" value="guitar">吉他</md-radio>
+        <md-radio v-model="type" value="sing">尤克里里</md-radio>
       </div>
     </md-field>
     <br />
@@ -26,45 +27,78 @@
         type="file"
         style="display: none"
       />
-      <div v-for="item in chosenSrc" :key="item.index">
-        <img
-          :src="item"
-          alt="Rounded Image"
-          class="rounded img-raised add input-img"
-        />
+      <div v-for="(item, index) in chosenSrc" :key="index">
+        <div class="image">
+          <i @click="offImg(index)" class="material-icons off">highlight_off</i>
+          <img
+            :src="item"
+            alt="Rounded Image"
+            class="rounded img-raised add input-img"
+          />
+        </div>
       </div>
     </div>
     <div class="submit">
       <md-button class="md-primary" @click="submit">確定添加</md-button>
     </div>
+
+    <md-dialog-alert
+      :md-active.sync="uploading"
+      md-content="正在上传，请稍等..."
+      md-confirm-text="不准点"
+    />
+
+    <md-dialog-alert
+      :md-active.sync="uploaded"
+      md-content="上传完成"
+      md-confirm-text="Cool!"
+    />
+
+    <md-dialog-alert
+      :md-active.sync="disUpload"
+      md-content="没有图片和标题上传啥呢"
+      md-confirm-text="ok"
+    />
   </div>
 </template>
 <script>
 import { uploadImg } from "../../utils/uploadImg";
-const axios = require("axios").default;
+import api from "@/utils/api";
+
+const debounce = (function () {
+  let timer, result, callNow;
+  let context = this;
+  let args = arguments;
+  if (timer) clearTimeout(timer);
+  return function (callback, wait) {
+    callNow = !timer;
+    timer = setTimeout(function () {
+      timer = null;
+    }, wait);
+    if (callNow) result = callback.apply(context, args);
+    return result;
+  };
+})();
 
 export default {
   data() {
     return {
       image: require("@/assets/img/add.png"),
       title: "",
-      typeRadio: true,
+      type: "piano",
       uploadFile: [],
       chosenSrc: [],
+      uploading: false,
+      uploaded: false,
+      disUpload: false,
     };
-  },
-  computed: {
-    type() {
-      return this.typeRadio ? "sing" : "finger";
-    },
   },
   methods: {
     addImg() {
       this.$refs.fileImg.dispatchEvent(new MouseEvent("click"));
     },
     chooseImg() {
-      const inputFile = this.$refs.fileImg.files[0];
-      this.uploadFile.push(inputFile);
+      let inputFile = this.$refs.fileImg.files[0];
       if (inputFile) {
         if (
           inputFile.type !== "image/jpeg" &&
@@ -74,6 +108,7 @@ export default {
           alert("不是有效的图片文件！");
           return;
         }
+        this.uploadFile.push(inputFile);
         let _this = this;
         const reader = new FileReader();
         reader.readAsDataURL(inputFile);
@@ -84,32 +119,44 @@ export default {
         return;
       }
     },
-    async submit() {
-      let scoreSrc = [];
-      let _this = this;
+    offImg(index) {
+      this.uploadFile.splice(index,1)
+      this.chosenSrc.splice(index,1)
+    },
+    submit() {
+      debounce(() => {
+        this.upload();
+      }, 5000);
+    },
+    async upload() {
       let upload = this.uploadFile;
-      for (var i = 0; i < upload.length; i++) {
-        uploadImg(upload[i], _this.type, function (src) {
-          scoreSrc.push(src);
-          if (i == upload.length) {
-            axios
-              .post("http://ts.tcualhp.cn/api/ukulele/music/add", {
-                scoreImg: scoreSrc,
-                type: _this.type,
-                title: _this.title,
-              })
-              .then((res) => {
-                alert("上传曲谱成功");
-                this.$router.go(0);
-              });
-          }
-        });
+      if (upload.length === 0 || this.title === "") {
+        this.disUpload = true;
+        return;
       }
+
+      let scoreSrc = [];
+      this.uploading = true;
+      for (var i = 0; i < upload.length; i++) {
+        let src = await uploadImg(upload[i], this.type);
+        scoreSrc.push(src);
+      }
+      await api.post("/music/add", {
+        scoreImg: scoreSrc,
+        type: this.type,
+        title: this.title,
+      });
+      this.uploading = false;
+      this.uploaded = true;
+      this.chosenSrc = [];
+      this.uploadFile = [];
+      this.title = "";
+      this.$emit("refresh");
     },
   },
 };
 </script>
-<style scoped>
+<style lang="scss" scoped>
 .add {
   width: 200px;
   height: 280px;
@@ -119,10 +166,21 @@ export default {
   height: 280px;
 }
 .input-img {
-  margin-left: 10px;
+  margin-left: 20px;
 }
 .submit {
   text-align: center;
   margin: 20px;
+}
+.image {
+  position: relative;
+  display: inline;
+  .off {
+    color: rgba(0, 0, 0, 0.54);
+    position: absolute;
+    right: -10px;
+    top: -10px;
+    cursor: pointer;
+  }
 }
 </style>

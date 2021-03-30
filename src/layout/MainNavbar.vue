@@ -8,7 +8,7 @@
   >
     <div class="md-toolbar-row md-collapse-lateral">
       <div class="md-toolbar-section-start">
-        <h3 class="md-title">ALOHA</h3>
+        <a href="#/"><h3 class="md-title">ALOHA</h3></a>
       </div>
       <div class="md-toolbar-section-end">
         <md-button
@@ -27,12 +27,13 @@
               <!-- Here you can add your items from the section-start of your toolbar -->
             </mobile-menu>
             <md-list>
-              <md-list-item
-                href="javascript:void(0)"
-                @click="scrollToElement()"
-              >
+              <md-list-item href="javascript:void(0)" @click="scrollToUpload()">
                 <i class="material-icons">cloud_upload</i>
                 <p>上传曲谱</p>
+              </md-list-item>
+              <md-list-item href="#/manage">
+                <i class="material-icons">content_paste</i>
+                <p>管理列表</p>
               </md-list-item>
             </md-list>
           </div>
@@ -59,7 +60,7 @@ function resizeThrottler(actualResizeHandler) {
 import MobileMenu from "@/layout/MobileMenu";
 export default {
   components: {
-    MobileMenu
+    MobileMenu,
   },
   props: {
     type: {
@@ -73,19 +74,19 @@ export default {
           "danger",
           "success",
           "warning",
-          "info"
+          "info",
         ].includes(value);
-      }
+      },
     },
     colorOnScroll: {
       type: Number,
-      default: 0
-    }
+      default: 0,
+    },
   },
   data() {
     return {
       extraNavClasses: "",
-      toggledClass: false
+      toggledClass: false,
     };
   },
   methods: {
@@ -107,18 +108,23 @@ export default {
     scrollListener() {
       resizeThrottler(this.handleScroll);
     },
-    scrollToElement() {
+    scrollToUpload() {
+      if (this.$route.path != "/") {
+        this.$router.push({
+          path: "/",
+        });
+      }
       let element_id = document.getElementById("uploadSection");
       if (element_id) {
         element_id.scrollIntoView({ block: "end", behavior: "smooth" });
       }
-    }
+    },
   },
   mounted() {
     document.addEventListener("scroll", this.scrollListener);
   },
   beforeDestroy() {
     document.removeEventListener("scroll", this.scrollListener);
-  }
+  },
 };
 </script>

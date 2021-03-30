@@ -13,23 +13,34 @@
       </div>
     </parallax>
     <div class="main main-raised">
-      <div class="section section-tabs">
+      <div class="section section-tabs" id="content">
         <div class="container">
-          <tabs></tabs>
+          <tabs
+            :pianoList="pianoList"
+            :guitarList="guitarList"
+            :singList="singList"
+          ></tabs>
         </div>
       </div>
       <div class="section section-intro">
         <h2 class="title text-center">Let's talk Ukulele</h2>
-        <h5 class="description">In the late 1870s, Portuguese sailors brought a ukulele-type instrument called the braguinha to the Hawailan Islands. The native Hawailans were impressed when they saw the speedy and intricate finger-work of the man playing the stringed instrument. They dubbed it a "ukulele" which means "jumping flea" in English. Sometimes, it is alse called a "uku" lele.</h5>
+        <h5 class="description">
+          In the late 1870s, Portuguese sailors brought a ukulele-type
+          instrument called the braguinha to the Hawailan Islands. The native
+          Hawailans were impressed when they saw the speedy and intricate
+          finger-work of the man playing the stringed instrument. They dubbed it
+          a "ukulele" which means "jumping flea" in English. Sometimes, it is
+          alse called a "uku" lele.
+        </h5>
       </div>
       <div class="section section-picture">
         <div class="container">
           <picture-carousel></picture-carousel>
         </div>
       </div>
-      <div class="section section-upload"  id="uploadSection">
+      <div class="section section-upload" id="uploadSection">
         <div class="container">
-          <upload></upload>
+          <upload v-on:refresh="refresh"></upload>
         </div>
       </div>
     </div>
@@ -40,30 +51,19 @@
 import Tabs from "./components/TabsSection";
 import PictureCarousel from "./components/PictureCarousel";
 import Upload from "./components/Upload";
+import api from '@/utils/api'
 
 export default {
   components: {
     Tabs,
     PictureCarousel,
-    Upload
+    Upload,
   },
   name: "index",
   props: {
     image: {
       type: String,
-      default: require("@/assets/img/header.jpg")
-    },
-    signup: {
-      type: String,
-      default: require("@/assets/img/city.jpg")
-    },
-    landing: {
-      type: String,
-      default: require("@/assets/img/landing.jpg")
-    },
-    profile: {
-      type: String,
-      default: require("@/assets/img/profile.jpg")
+      default: require("@/assets/img/header.jpg"),
     }
   },
   data() {
@@ -71,7 +71,10 @@ export default {
       firstname: null,
       email: null,
       password: null,
-      leafShow: false
+      leafShow: false,
+      pianoList: [],
+      guitarList: [],
+      singList: [],
     };
   },
   methods: {
@@ -81,19 +84,34 @@ export default {
       } else {
         this.leafShow = true;
       }
+    },
+
+    refresh() {
+      this.getData();
+      let element_id = document.getElementById("content");
+      element_id.scrollIntoView();
+    },
+
+    async getData() {
+      this.pianoList = await api.get('/music?type=piano')
+      this.guitarList = await api.get('/music?type=guitar')
+      this.singList = await api.get('/music?type=sing')
     }
   },
   computed: {
     headerStyle() {
       return {
-        backgroundImage: `url(${this.image})`
+        backgroundImage: `url(${this.image})`,
       };
     },
     signupImage() {
       return {
-        backgroundImage: `url(${this.signup})`
+        backgroundImage: `url(${this.signup})`,
       };
-    }
+    },
+  },
+  created() {
+    this.getData();
   },
   mounted() {
     this.leafActive();
@@ -101,7 +119,7 @@ export default {
   },
   beforeDestroy() {
     window.removeEventListener("resize", this.leafActive);
-  }
+  },
 };
 </script>
 <style lang="scss">
