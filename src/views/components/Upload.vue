@@ -29,7 +29,7 @@
       />
       <div v-for="(item, index) in chosenSrc" :key="index">
         <div class="image">
-          <i @click="offImg(index)" class="material-icons off">highlight_off</i>
+          <i @click="offImg(index)" @mouseenter="arrowTransform" @mouseleave="arrowTransformReturn" :class="{ 'arrowTransform': !arrow, 'arrowTransformReturn': arrow}" class="material-icons off">highlight_off</i>
           <img
             :src="item"
             alt="Rounded Image"
@@ -91,6 +91,7 @@ export default {
       uploading: false,
       uploaded: false,
       disUpload: false,
+      arrow: false
     };
   },
   methods: {
@@ -153,6 +154,12 @@ export default {
       this.title = "";
       this.$emit("refresh");
     },
+    arrowTransform() {
+      this.arrow = !this.arrow
+    },
+    arrowTransformReturn() {
+      this.arrow = !this.arrow
+    }
   },
 };
 </script>
@@ -183,4 +190,14 @@ export default {
     cursor: pointer;
   }
 }
+.arrowTransform{
+    transition: 0.2s;
+    transform-origin: center;
+    transform: rotateZ(180deg);
+  }
+  .arrowTransformReturn{
+    transition: 0.2s;
+    transform-origin: center;
+    transform: rotateZ(0deg);
+  }
 </style>
